@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import styles from './CricketBetting.module.css';
 
-const socket = io('http://145.223.21.62:3030');
+const socket = io('http://localhost:3030');
 
 const CricketBetting = () => {
   const [matches, setMatches] = useState([]);
@@ -88,7 +88,7 @@ const CricketBetting = () => {
   const fetchMatches = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://145.223.21.62:3030/matches');
+      const response = await fetch('http://localhost:3030/matches');
       if (!response.ok) throw new Error('Failed to fetch matches');
       const data = await response.json();
       // Format the matches data to ensure team1 and team2 are always present
@@ -108,7 +108,7 @@ const CricketBetting = () => {
 
   const fetchWalletBalance = async () => {
     try {
-      const response = await fetch(`http://145.223.21.62:3030/wallet?user_id=${userId}`);
+      const response = await fetch(`http://localhost:3030/wallet?user_id=${userId}`);
       if (!response.ok) throw new Error('Failed to fetch wallet balance');
       const data = await response.json();
       // Convert to number and handle potential null/undefined values
@@ -122,7 +122,7 @@ const CricketBetting = () => {
 
   const fetchBetHistory = async () => {
     try {
-      const response = await fetch(`http://145.223.21.62:3030/bet-history?user_id=${userId}`);
+      const response = await fetch(`http://localhost:3030/bet-history?user_id=${userId}`);
       if (!response.ok) throw new Error('Failed to fetch bet history');
       const data = await response.json();
       setBetHistory(data);
@@ -134,7 +134,7 @@ const CricketBetting = () => {
 
   const handlePlaceBet = async () => {
     try {
-      const response = await fetch('http://145.223.21.62:3030/place-bet', {
+      const response = await fetch('http://localhost:3030/place-bet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

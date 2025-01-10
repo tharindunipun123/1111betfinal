@@ -19,9 +19,9 @@ app.use(cors());
 
 // Database connection pool
 const db = mysql.createPool({
-  host: '127.0.0.1',
-  user: 'newuser',
-  password: 'newuser_password',
+  host: 'localhost',
+  user: 'root',
+  password: '',
   database: 'spin_wheel_db',
   waitForConnections: true,
   connectionLimit: 10,
@@ -196,6 +196,101 @@ app.get('/bet-history', async (req, res) => {
   }
 });
 
+// app.post('/end-match', async (req, res) => {
+//   const { matchId, result, fullTargetResult, sixOverTargetResult } = req.body;
+
+//   try {
+//     await db.query('START TRANSACTION');
+
+//     // Update match status and results
+//     await db.query(`
+//       UPDATE cricket_matches 
+//       SET status = "completed", 
+//           result = ?,
+//           full_target_result = ?,
+//           six_over_target_result = ?
+//       WHERE id = ?
+//     `, [result, fullTargetResult, sixOverTargetResult, matchId]);
+
+//     // Get all bets for this match with their original multipliers
+//     const [bets] = await db.query(`
+//       SELECT cb.*, 
+//              cb.multiplier as original_multiplier,
+//              cb.amount as bet_amount,
+//              cb.user_id as better_id
+//       FROM cricket_bets cb 
+//       WHERE cb.match_id = ? AND cb.status = 'pending'
+//     `, [matchId]);
+
+//     for (const bet of bets) {
+//       let isWinner = false;
+
+//       // Determine if bet is winner based on bet type
+//       if (bet.bet_type.includes('team') || bet.bet_type === 'draw') {
+//         isWinner = bet.bet_type === result;
+//       } else if (bet.bet_type.includes('full_target')) {
+//         isWinner = (bet.bet_type === 'full_target_yes' && fullTargetResult === 'yes') ||
+//                   (bet.bet_type === 'full_target_no' && fullTargetResult === 'no');
+//       } else if (bet.bet_type.includes('six_over_target')) {
+//         isWinner = (bet.bet_type === 'six_over_target_yes' && sixOverTargetResult === 'yes') ||
+//                   (bet.bet_type === 'six_over_target_no' && sixOverTargetResult === 'no');
+//       }
+
+//       if (isWinner) {
+//         // Calculate winnings including original bet amount
+//         const winnings = parseFloat(bet.bet_amount) * parseFloat(bet.original_multiplier);
+        
+//         // Update user wallet - add winnings
+//         await db.query('UPDATE users SET wallet = wallet + ? WHERE id = ?', 
+//           [winnings, bet.better_id]);
+        
+//         // Update bet status and winnings
+//         await db.query('UPDATE cricket_bets SET status = "won", winnings = ? WHERE id = ?', 
+//           [winnings, bet.id]);
+        
+//         console.log(`User ${bet.better_id} won ${winnings} on bet ${bet.id}`);
+//       } else {
+//         // Update bet status to lost
+//         await db.query('UPDATE cricket_bets SET status = "lost", winnings = 0 WHERE id = ?', 
+//           [bet.id]);
+//       }
+//     }
+
+//     await db.query('COMMIT');
+
+//     // Get updated match data for notification
+//     const [updatedMatch] = await db.query(`
+//       SELECT m.*, 
+//         (SELECT team_name FROM match_teams WHERE match_id = m.id ORDER BY id LIMIT 1) as team1,
+//         (SELECT team_name FROM match_teams WHERE match_id = m.id ORDER BY id LIMIT 1, 1) as team2
+//       FROM cricket_matches m
+//       WHERE m.id = ?
+//     `, [matchId]);
+
+//     // Notify clients about the match end
+//     io.emit('matchEnded', { 
+//       matchId, 
+//       result,
+//       fullTargetResult,
+//       sixOverTargetResult,
+//       match: updatedMatch[0]
+//     });
+
+//     res.json({ 
+//       success: true, 
+//       message: 'Match ended and bets processed successfully'
+//     });
+//   } catch (error) {
+//     await db.query('ROLLBACK');
+//     console.error('Error ending match:', error);
+//     res.status(500).json({ 
+//       success: false, 
+//       message: 'Internal server error',
+//       error: error.message 
+//     });
+//   }
+// });
+
 app.post('/end-match', async (req, res) => {
   const { matchId, result, fullTargetResult, sixOverTargetResult } = req.body;
 
@@ -209,16 +304,18 @@ app.post('/end-match', async (req, res) => {
           result = ?,
           full_target_result = ?,
           six_over_target_result = ?
-      WHERE id = ?
+      WHERE id = ? AND status != 'completed'
     `, [result, fullTargetResult, sixOverTargetResult, matchId]);
 
-    // Get all bets for this match with their original multipliers
+    // Get all pending bets with their details
     const [bets] = await db.query(`
       SELECT cb.*, 
              cb.multiplier as original_multiplier,
              cb.amount as bet_amount,
-             cb.user_id as better_id
+             cb.user_id as better_id,
+             u.wallet as current_wallet
       FROM cricket_bets cb 
+      JOIN users u ON cb.user_id = u.id
       WHERE cb.match_id = ? AND cb.status = 'pending'
     `, [matchId]);
 
@@ -237,26 +334,36 @@ app.post('/end-match', async (req, res) => {
       }
 
       if (isWinner) {
-        // Calculate winnings including original bet amount
-        const winnings = parseFloat(bet.bet_amount) * parseFloat(bet.original_multiplier);
+        // Calculate winnings using precise decimal arithmetic
+        const betAmount = parseFloat(bet.bet_amount);
+        const multiplier = parseFloat(bet.original_multiplier);
+        const winnings = Math.round((betAmount * multiplier) * 100) / 100;
         
-        // Update user wallet - add winnings
-        await db.query('UPDATE users SET wallet = wallet + ? WHERE id = ?', 
-          [winnings, bet.better_id]);
+        // Update user wallet with optimistic locking
+        const [updateResult] = await db.query(
+          'UPDATE users SET wallet = wallet + ? WHERE id = ? AND wallet = ?', 
+          [winnings, bet.better_id, bet.current_wallet]
+        );
+
+        if (updateResult.affectedRows === 0) {
+          throw new Error(`Wallet update failed for user ${bet.better_id}`);
+        }
         
         // Update bet status and winnings
-        await db.query('UPDATE cricket_bets SET status = "won", winnings = ? WHERE id = ?', 
-          [winnings, bet.id]);
+        await db.query(
+          'UPDATE cricket_bets SET status = "won", winnings = ? WHERE id = ? AND status = "pending"', 
+          [winnings, bet.id]
+        );
         
         console.log(`User ${bet.better_id} won ${winnings} on bet ${bet.id}`);
       } else {
         // Update bet status to lost
-        await db.query('UPDATE cricket_bets SET status = "lost", winnings = 0 WHERE id = ?', 
-          [bet.id]);
+        await db.query(
+          'UPDATE cricket_bets SET status = "lost", winnings = 0 WHERE id = ? AND status = "pending"', 
+          [bet.id]
+        );
       }
     }
-
-    await db.query('COMMIT');
 
     // Get updated match data for notification
     const [updatedMatch] = await db.query(`
@@ -266,6 +373,8 @@ app.post('/end-match', async (req, res) => {
       FROM cricket_matches m
       WHERE m.id = ?
     `, [matchId]);
+
+    await db.query('COMMIT');
 
     // Notify clients about the match end
     io.emit('matchEnded', { 

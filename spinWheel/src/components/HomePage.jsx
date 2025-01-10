@@ -22,8 +22,16 @@ const HomePage = () => {
       title: "Dice Game",
       path: "/dice",
       image: "https://fthmb.tqn.com/CcCUqMPOoZtiIWsdxbCe4l-BykA=/3364x2242/filters:fill(auto,1)/Rolling-dice-GettyImages-93453966-58a6f50c3df78c345b634f6f.jpg",
+      description: "Roll your Luck"
+    },
+     
+    {
+      title: "Cricket Bet Game",
+      path: "/cricket",
+      image: "https://tse4.mm.bing.net/th?id=OIP.pVW7gxivmMi-fqLJQQvR0AHaEA&rs=1&pid=ImgDetMain",
       description: "Play cricket and earn rewards!"
     }
+
   ];
 
   return (
@@ -156,16 +164,16 @@ const HomePage = () => {
   </div>
 </section>
     {/* Footer */}
-<footer className="py-4 text-white" style={{ backgroundColor: '#041A34' }}>
+    <footer className="py-4 text-white" style={{ backgroundColor: '#041A34' }}>
   <div className="container">
     <div className="row gy-4">
-      <div className="col-lg-4">
+      <div className="col-lg-3">
         <h5 className="fw-bold text-info mb-3">Logo</h5>
         <p className="text-white">
           Experience the thrill of gaming and earning.
         </p>
       </div>
-      <div className="col-lg-4">
+      <div className="col-lg-3">
         <h5 className="fw-bold text-info mb-3">Quick Links</h5>
         <ul className="list-unstyled">
           <li>
@@ -180,12 +188,24 @@ const HomePage = () => {
           </li>
         </ul>
       </div>
-      <div className="col-lg-4">
+      <div className="col-lg-3">
         <h5 className="fw-bold text-info mb-3">Contact Info</h5>
         <ul className="list-unstyled text-white">
           <li>Support: support@example.com</li>
           <li>Phone: (123) 456-7890</li>
         </ul>
+      </div>
+      <div className="col-lg-3">
+        <h5 className="fw-bold text-info mb-3">Download App</h5>
+        <a 
+          href="YOUR_APK_DOWNLOAD_URL_HERE" 
+          className="btn btn-download"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <i className="fas fa-download me-2"></i>
+          Download APK
+        </a>
       </div>
     </div>
     <div className="text-center text-white mt-4 pt-4 border-top border-secondary">
@@ -198,6 +218,83 @@ const HomePage = () => {
       .hover-opacity:hover {
         opacity: 0.8;
         transition: opacity 0.3s ease;
+      }
+
+      .btn-download {
+        background: linear-gradient(45deg, #2196F3, #00BCD4);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+      }
+
+      .btn-download:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        background: linear-gradient(45deg, #1976D2, #0097A7);
+        color: white;
+      }
+
+      .btn-download:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      }
+
+      .game-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(145deg, #041A34, #062952);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      }
+
+      .game-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+      }
+
+      .game-image {
+        transition: transform 0.5s ease;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .game-card:hover .game-image {
+        transform: scale(1.08);
+      }
+
+      .card-img-overlay {
+        background: linear-gradient(
+          to bottom,
+          rgba(4, 26, 52, 0),
+          rgba(4, 26, 52, 0.8) 50%,
+          rgba(4, 26, 52, 0.95) 100%
+        );
+        transition: all 0.3s ease;
+        border-radius: 8px;
+      }
+
+      .game-card:hover .card-img-overlay {
+        background: linear-gradient(
+          to bottom,
+          rgba(4, 26, 52, 0.2),
+          rgba(4, 26, 52, 0.9) 50%,
+          rgba(4, 26, 52, 0.98) 100%
+        );
+      }
+
+      .card-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      }
+
+      .card-text {
+        font-size: 1rem;
+        opacity: 0.9;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
       }
     `}
   </style>
