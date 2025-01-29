@@ -84,21 +84,21 @@ const HomePage = () => {
                 </div>
               </li>
               <li className="nav-item">
-                <div 
-                  className="nav-link cursor-pointer" 
-                  onClick={() => navigate('/payment')}
-                >
-                  Deposit
-                </div>
-              </li>
-              <li className="nav-item">
-                <div 
-                  className="nav-link cursor-pointer" 
-                  onClick={() => navigate('/withdraw')}
-                >
-                  Withdraw
-                </div>
-              </li>
+  <a 
+    href="http://369betting.com/bet/upload_payment_receipt.php" 
+    className="nav-link cursor-pointer"
+  >
+    Deposit
+  </a>
+</li>
+<li className="nav-item">
+  <a 
+    href="http://369betting.com/bet/withdrawal_request.php" 
+    className="nav-link cursor-pointer"
+  >
+    Withdraw
+  </a>
+</li>
             </ul>
           </div>
         </div>
